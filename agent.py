@@ -47,9 +47,9 @@ class Agent(object):
 
     def learn(self, batchSize):
         self.Qevaluation.optimizer.zero_grad()
-        if self.targetReplaceCount is not None and self.stepCounter%self.targetReplaceCount == 0:
-            #TODO remove ? not used ?
-            self.Qprediction.load_state_dict(self.Qevaluation.state_dict())
+        # if self.targetReplaceCount is not None and self.stepCounter%self.targetReplaceCount == 0:
+        #     #TODO remove ? not used ?
+        #     self.Qprediction.load_state_dict(self.Qevaluation.state_dict())
 
         minibatch = []
         if self.memCounter < batchSize:
@@ -60,6 +60,7 @@ class Agent(object):
 
         memory = np.array(minibatch)
 
+        # memory : []
         evaluation = self.Qevaluation.forward(list(memory[:, 0][:])).to(self.Qevaluation.device)
         prediction = self.Qprediction.forward(list(memory[:, 3][:])).to(self.Qprediction.device)
 
@@ -69,7 +70,7 @@ class Agent(object):
 
         # BELLMAN
         targetCalc = rewards + self.gamma * torch.max(prediction[1])
-
+        maxPrediction= torch.max(prediction[1])
         target[:, maxAction] = rewards + self.gamma * torch.max(prediction[1])
 
         #LOSS Function

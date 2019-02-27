@@ -11,6 +11,8 @@ np.set_printoptions(threshold=np.nan)
 env = gym.make('CarRacing-v0')
 env.reset()
 discreteActions = np.array([[0.0, 1.0, 0.0], [1.0, 0.3, 0], [-1.0, 0.3, 0.0], [0.0, 0.0, 0.8]])
+actionSpace = [0, 1, 2 , 3]
+
 # act = disc_actions[0]
 
 agent = Agent(  gamma=0.95,
@@ -20,7 +22,7 @@ agent = Agent(  gamma=0.95,
                 alpha = 0.003,
                 maxMemSize=150,
                 targetReplaceCount=None, #don't use replacement, check this out later
-                actionSpace=discreteActions,
+                actionSpace=actionSpace,
                 episodeEnd=0.05
               )
 # INITIALIZE AGENT MEMORY TODO: is this still necessary & isn't this already handled in agent.storeTransition?
@@ -33,7 +35,7 @@ while agent.memCounter < agent.maxMemSize:
         actionIndex = np.random.randint(0, 3)
         action = discreteActions[actionIndex]
         observation_, reward, done, info = env.step(action)
-        agent.storeTransition(np.mean(observation, axis=2), action, reward, observation)
+        agent.storeTransition(np.mean(observation, axis=2), action, reward, np.mean(observation, axis=2))
 
         observation = observation_
 
@@ -53,9 +55,16 @@ for i in range(numberOfGames):
     done = False
     observation = env.reset()
 
-    frames = [np.sum(observation[0:80], axis=2)]
+    # step past the zooming in the beginning of the game
+    for z in range(60):
+        env.step([0,0,0])
+        env.render()
+
+
+    # frames = [observation]
+    frames = []
     score = 0
-    lastAction = [0.0, 1.0, 0.0]
+    lastAction = 0
     frameCounter = 0
 
     while not done:
@@ -64,9 +73,13 @@ for i in range(numberOfGames):
             frames = []
         else:
             action = lastAction
-        observation_, reward, done, info = env.step(action)
+
+        # Use the chosen action as an index to choose the real action
+        act = discreteActions[action]
+        observation_, reward, done, info = env.step(act)
         score += reward
-        frames.append(np.sum(observation_[0:80, 0:96], axis=2)) #observation_[0:80, 0:96]
+
+        frames.append(np.mean(observation_, axis=2)) #observation_[0:80, 0:96]
         #TODO too long driving offroad
         #for now now maximum render 50 frames
         if(frameCounter > 150):
